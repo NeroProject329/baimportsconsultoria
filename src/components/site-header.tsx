@@ -10,7 +10,7 @@ export function SiteHeader({ loading, onWhatsappClick }: SiteHeaderProps) {
     <header className="sticky top-0 z-50 border-b border-black/5 bg-white/95 shadow-[0_10px_30px_rgba(0,0,0,0.10)] backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <div className="font-display text-2xl font-bold tracking-tight text-slate-900">
-          Consultoria<span className="text-pink-600"> Azul</span>
+          Ba Imports<span className="text-pink-600"> Consultoria</span>
         </div>
 
         <button
