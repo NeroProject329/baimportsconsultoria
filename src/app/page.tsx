@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FloatingWhatsapp } from "@/components/floating-whatsapp";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -332,11 +332,8 @@ function StarRow() {
 export default function HomePage() {
   const { loading, openWhatsapp } = useWhatsapp();
   const [showCookieBanner, setShowCookieBanner] = useState(false);
-
-  const marqueeTestimonials = useMemo(
-    () => [...testimonials, ...testimonials],
-    []
-  );
+  const testimonialsRef = useRef<HTMLDivElement | null>(null);
+  const [isTestimonialsHovered, setIsTestimonialsHovered] = useState(false);
 
   useEffect(() => {
     try {
@@ -350,6 +347,70 @@ export default function HomePage() {
       return () => clearTimeout(timer);
     }
   }, []);
+
+  const getTestimonialScrollAmount = () => {
+    const container = testimonialsRef.current;
+    if (!container) return 0;
+
+    const card = container.querySelector("[data-testimonial-card]") as HTMLElement | null;
+    if (!card) return 0;
+
+    const styles = window.getComputedStyle(container);
+    const gap = parseInt(styles.gap || styles.columnGap || "24", 10);
+
+    return card.offsetWidth + gap;
+  };
+
+  const scrollTestimonials = (direction: "prev" | "next") => {
+    const container = testimonialsRef.current;
+    if (!container) return;
+
+    const amount = getTestimonialScrollAmount();
+    if (!amount) return;
+
+    const maxScrollLeft = container.scrollWidth - container.clientWidth;
+
+    if (direction === "next") {
+      const next = container.scrollLeft + amount;
+
+      if (next >= maxScrollLeft - 8) {
+        container.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        container.scrollBy({ left: amount, behavior: "smooth" });
+      }
+    } else {
+      const prev = container.scrollLeft - amount;
+
+      if (prev <= 0) {
+        container.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        container.scrollBy({ left: -amount, behavior: "smooth" });
+      }
+    }
+  };
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      const container = testimonialsRef.current;
+      if (!container) return;
+      if (window.innerWidth < 768) return;
+      if (isTestimonialsHovered) return;
+
+      const amount = getTestimonialScrollAmount();
+      if (!amount) return;
+
+      const maxScrollLeft = container.scrollWidth - container.clientWidth;
+      const next = container.scrollLeft + amount;
+
+      if (next >= maxScrollLeft - 8) {
+        container.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        container.scrollBy({ left: amount, behavior: "smooth" });
+      }
+    }, 3500);
+
+    return () => window.clearInterval(interval);
+  }, [isTestimonialsHovered]);
 
   const acceptCookies = () => {
     try {
@@ -372,14 +433,14 @@ export default function HomePage() {
       <main>
         <section
           className="relative overflow-hidden text-white"
-         style={{
-  backgroundColor: "#e83170",
-  backgroundImage:
-    "linear-gradient(135deg, rgba(232,49,112,0.62), rgba(194,24,91,0.68)), url('/img/gplay.png')",
-  backgroundRepeat: "repeat",
-  backgroundPosition: "center",
-  backgroundSize: "auto",
-}}
+          style={{
+            backgroundColor: "#e83170",
+            backgroundImage:
+              "linear-gradient(135deg, rgba(232,49,112,0.78), rgba(194,24,91,0.82)), url('/img/gplay.png')",
+            backgroundRepeat: "repeat",
+            backgroundPosition: "center",
+            backgroundSize: "auto",
+          }}
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),transparent_30%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.06),transparent_35%)]" />
@@ -536,35 +597,77 @@ export default function HomePage() {
 
         <section className="overflow-hidden bg-white px-6 py-24">
           <div className="mx-auto max-w-6xl">
-            <h2 className="font-display text-center text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              O que Nossos Clientes Dizem
-            </h2>
-            <p className="font-body mx-auto mt-4 max-w-2xl text-center text-lg text-slate-500">
-              Histórico de sucesso e satisfação dos clientes
-            </p>
+            <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="font-display text-center text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl md:text-left">
+                  O que Nossos Clientes Dizem
+                </h2>
+                <p className="font-body mx-auto mt-4 max-w-2xl text-center text-lg text-slate-500 md:mx-0 md:text-left">
+                  Histórico de sucesso e satisfação dos clientes
+                </p>
+              </div>
 
-            <div className="marquee-pause mt-14 overflow-hidden">
-              <div className="marquee-track flex gap-8 px-4 md:gap-8">
-                {marqueeTestimonials.map((testimonial, index) => (
-                  <div
-                    key={`${testimonial.name}-${index}`}
-                    className="relative flex min-h-[300px] w-[360px] flex-none flex-col rounded-3xl border border-black/5 bg-white px-8 pb-8 pt-12 shadow-[0_8px_32px_rgba(0,0,0,0.08)] transition hover:-translate-y-2 hover:border-pink-200 hover:shadow-[0_16px_48px_rgba(233,30,99,0.14)] max-md:w-[300px]"
+              <div className="hidden items-center gap-3 md:flex">
+                <button
+                  type="button"
+                  onClick={() => scrollTestimonials("prev")}
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-pink-200 bg-white text-pink-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-pink-50"
+                  aria-label="Voltar depoimentos"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5 fill-none stroke-current stroke-2"
                   >
-                    <div className="absolute -top-7 left-8 h-14 w-14 overflow-hidden rounded-full border-4 border-white bg-pink-600 shadow-[0_4px_15px_rgba(233,30,99,0.35)]">
-                      <img
-                        src={testimonial.image}
-                        alt={testimonial.name}
-                        className="h-full w-full object-cover"
-                      />
+                    <path d="m15 6-6 6 6 6" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => scrollTestimonials("next")}
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-pink-200 bg-white text-pink-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-pink-50"
+                  aria-label="Avançar depoimentos"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5 fill-none stroke-current stroke-2"
+                  >
+                    <path d="m9 6 6 6-6 6" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div
+              ref={testimonialsRef}
+              onMouseEnter={() => setIsTestimonialsHovered(true)}
+              onMouseLeave={() => setIsTestimonialsHovered(false)}
+              className="hide-scrollbar mt-14 flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth px-2 pt-8 pb-4"
+            >
+              {testimonials.map((testimonial, index) => (
+                <article
+                  key={`${testimonial.name}-${index}`}
+                  data-testimonial-card
+                  className="relative h-[320px] w-[82vw] max-w-[300px] flex-none snap-center overflow-visible rounded-3xl border border-black/5 bg-white px-6 pb-6 pt-10 shadow-[0_8px_32px_rgba(0,0,0,0.08)] transition hover:-translate-y-2 hover:border-pink-200 hover:shadow-[0_16px_48px_rgba(233,30,99,0.14)] md:h-[300px] md:w-[320px] md:max-w-[320px] md:px-7 md:pb-7 md:pt-10"
+                >
+                  <div className="absolute left-6 top-0 z-10 h-14 w-14 -translate-y-1/2 overflow-hidden rounded-full border-4 border-white bg-pink-600 shadow-[0_4px_15px_rgba(233,30,99,0.35)]">
+                    <img
+                      src={testimonial.image}
+                      alt={testimonial.name}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <div className="flex h-full flex-col">
+                    <div className="mt-2">
+                      <StarRow />
                     </div>
 
-                    <StarRow />
-
-                    <p className="font-body relative flex-1 pl-4 text-[15px] leading-7 text-slate-700 before:absolute before:-left-1 before:-top-3 before:text-5xl before:text-pink-600/20 before:content-['“']">
+                    <p className="font-body relative flex-1 overflow-hidden pl-4 text-[14px] leading-7 text-slate-700 before:absolute before:-left-1 before:-top-3 before:text-5xl before:text-pink-600/20 before:content-['“'] md:text-[15px]">
                       {testimonial.text}
                     </p>
 
-                    <div className="mt-6 border-t border-black/8 pt-5">
+                    <div className="mt-5 border-t border-black/8 pt-4">
                       <strong className="block text-base font-semibold text-pink-600">
                         {testimonial.name}
                       </strong>
@@ -573,8 +676,8 @@ export default function HomePage() {
                       </span>
                     </div>
                   </div>
-                ))}
-              </div>
+                </article>
+              ))}
             </div>
           </div>
         </section>
