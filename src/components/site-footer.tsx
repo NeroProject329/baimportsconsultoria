@@ -6,7 +6,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">
           <div className="font-display text-3xl font-bold tracking-tight">
-            Ba Imports <span className="text-pink-500"> Consultoria</span>
+            Ba Imports Ismael C  <span className="text-pink-500"> Borges LTDA</span>
           </div>
 
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/75">
